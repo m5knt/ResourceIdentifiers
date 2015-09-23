@@ -1,8 +1,9 @@
 Library/
 Temp/
 obj/
+.project
 *.sln
 *.suo
 *.csproj
 **/*.meta
-
+.*
