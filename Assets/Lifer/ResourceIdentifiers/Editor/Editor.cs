@@ -25,7 +25,7 @@ namespace Lifer.ResourceIdentifiers {
       new Scene().Update();
       new Resource().Update();
       new StreamingAssets().Update();
-      AssetDatabase.Refresh();
+      AssetDatabase.Refresh(ImportAssetOptions.ImportRecursive);
     }
 
     [MenuItem("Lifer/ResourceIdentifiers/Reset")]

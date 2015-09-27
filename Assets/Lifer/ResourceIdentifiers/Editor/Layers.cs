@@ -50,7 +50,7 @@ namespace Lifer.ResourceIdentifiers {
         var e = new XElement("resource");
         e.SetAttributeValue("idx", i);
         e.SetAttributeValue("sym", sym);
-        e.SetAttributeValue("val", layer);
+        e.SetAttributeValue("val", LayerMask.NameToLayer(layer));
         e.Value = layer;
         return e;
       }).ToList();
@@ -60,7 +60,7 @@ namespace Lifer.ResourceIdentifiers {
     protected override void Generate(TextWriter o, XElement e) {
       var sym = e.Attribute("sym").Value;
       var val = e.Attribute("val").Value;
-      o.WriteLine(@"const string {0} = ""{1}"";", sym, val);
+      o.WriteLine(@"const int {0} = {1};", sym, val);
     }
   }
 }
