@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
+using System.Xml.Linq;
 
 /*
  *
@@ -24,60 +25,74 @@ using System.Linq;
 
 namespace Lifer.ResourceIdentifiers {
 
-	public class StreamingAssets : Identifier {
+  public class StreamingAssets : Identifier {
 
-		protected override string BaseName {
-			get {
-				return "StreamingAssets";
-			}
-		}
+    protected override string BaseName {
+      get {
+        return "StreamingAssets";
+      }
+    }
 
-		protected override string NameSpace {
-			get {
-				return "SA";
-			}
-		}
+    protected override string NameSpace {
+      get {
+        return "SA";
+      }
+    }
 
-		const string source = "Assets/StreamingAssets/";
+    const string source = "Assets/StreamingAssets/";
 
-		protected override List<string> All {
-			get {
-				var alls = AssetDatabase.GetAllAssetPaths();
-				var currents = alls.Where(n => {
-					return !Directory.Exists(n) && n.StartsWith(source);
-				});
-				return currents.ToList();
-			}
-		}
+    public override void Update() {
+      // xml 豎ｺ螳�
+      var book = new Serialize(XML);
+      book.Load();
+      book.Update(Collect());
+      book.Save();
+    }
 
-		public override void Generate() {
-			// xml 決定
-			var book = new Book(XML);
-			book.Load();
-			book.Update(All);
-			book.Save();
-			// 枝作り処理定義
-			var treemaker = new Action<Node<string, string>, string>((tree, path) => {
-				var valid = path.Substring(source.Count());
-				var p = valid;
-				p = Const.ShortenRule.Replace(p, "");
-				p = Const.UnderRule.Replace(p, "_");
-				var crumbs = p.Split('/').Where(n => n != "").ToList();
-				// 識別子化可能かチェック
-				if (!crumbs.All(n => Const.IdentifyRule.IsMatch(n))) return;
-				tree.Add(crumbs, valid);
-			});
-			// 有効分
-			var avile = new Node<string, string>();
-			foreach (var path in book.Avails) treemaker(avile, path);
-			using (var o = new StreamWriter(CS, false, Encoding.UTF8)) {
+    protected override List<XElement> Collect() {
+      var paths = AssetDatabase.GetAllAssetPaths().Where(n => {
+        return !Directory.Exists(n) && n.StartsWith(source);
+      });
+      var i = -1;
+      var elems = paths.Select(path => {
+        ++i;
+        var rel = path.Substring(source.Length);
+        var crumbs = rel.Split('/').ToList();
+        var syms = string.Join("/",
+          crumbs.Select(c => ToIdentifier(c)).ToArray());
+        var e = new XElement("resource");
+        e.SetAttributeValue("idx", i);
+        e.SetAttributeValue("sym", syms);
+        e.SetAttributeValue("val", rel);
+        e.Value = rel;
+        return e;
+      }).ToList();
+      return elems;
+    }
+
+    protected override void Generate(Serialize book) {
+      // 譛牙柑蛻�
+      var avail = new Node<string, string>();
+      book.Avail.Select(k => book.All[k]).ToList().ForEach(e => {
+        var crumbs = e.Attribute("sym").Value.Split('/').ToList();
+        var val = e.Attribute("val").Value;
+        avail.Add(crumbs, val);
+      });
+      // 辟｡蜉ｹ蛻�
+      var missing = new Node<string, string>();
+      book.Missing.Select(k => book.All[k]).ToList().ForEach(e => {
+        var crumbs = e.Attribute("sym").Value.Split('/').ToList();
+        var val = e.Attribute("val").Value;
+        missing.Add(crumbs, val);
+      });
+      using (var o = new StreamWriter(CS, false, Encoding.UTF8)) {
 				o.Write(@"using System;
 using System.Diagnostics;
 
 namespace Lifer.Generate {{
 public partial class {0} {{
 ", NameSpace);
-				avile.Traverse(
+				avail.Traverse(
 					(k, v) => {
 						o.WriteLine("public partial class {0} {{", k);
 					},
@@ -90,11 +105,7 @@ public partial class {0} {{
 				);
 				o.WriteLine(@"}
 }");
-			}
-			// 無効分
-			var missing = new Node<string, string>();
-			foreach (var path in book.Missing) treemaker(missing, path);
-			using (var o = new StreamWriter(CS, true, Encoding.UTF8)) {
+        // 辟｡蜉ｹ蛻�
 				o.Write(@"
 #if UNITY_EDITOR
 namespace Lifer.Generate {{
@@ -119,10 +130,11 @@ public const string {0} = ""{1}"";
 #endif
 ");
 			}
-		}
-	}
+    }
+  }
 }
 
 /*
  *
  */
+

@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
+using System.Xml.Linq;
 
 /*
  *
@@ -26,31 +27,42 @@ using System.Linq;
 
 namespace Lifer.ResourceIdentifiers {
 
-	public class Layer : FlatIdentifier {
+  public class Layer : FlatIdentifier {
 
-		protected override string BaseName {
-			get {
-				return "Layer";
-			}
-		}
+    protected override string BaseName {
+      get {
+        return "Layer";
+      }
+    }
 
-		protected override string NameSpace {
-			get {
-				return "L";
-			}
-		}
+    protected override string NameSpace {
+      get {
+        return "L";
+      }
+    }
 
-		protected override List<string> All {
-			get {
-				return InternalEditorUtility.layers.
-					Where(n => Const.CamelRule.IsMatch(n)).ToList();
-			}
-		}
+    protected override List<XElement> Collect() {
+      var i = -1;
+      var layers = InternalEditorUtility.layers;
+      var elems = layers.Select(layer => {
+        ++i;
+        var sym = ToIdentifier(layer);
+        var e = new XElement("resource");
+        e.SetAttributeValue("idx", i);
+        e.SetAttributeValue("sym", sym);
+        e.SetAttributeValue("val", layer);
+        e.Value = layer;
+        return e;
+      }).ToList();
+      return elems;
+    }
 
-		protected override string ToLabel(string name) {
-			return name.Replace(" ", "");
-		}
-	}
+    protected override void Generate(TextWriter o, XElement e) {
+      var sym = e.Attribute("sym").Value;
+      var val = e.Attribute("val").Value;
+      o.WriteLine(@"const string {0} = ""{1}"";", sym, val);
+    }
+  }
 }
 
 /*

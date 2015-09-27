@@ -17,33 +17,33 @@ using UnityEngine;
 
 namespace Lifer.ResourceIdentifiers {
 
-	public class Editor {
-		[MenuItem("Lifer/ResourceIdentifiers/Generate")]
-		public static void Generate() {
-			new Scene().Generate();
-			new Tag().Generate();
-			new Layer().Generate();
-			new Resource().Generate();
-			new StreamingAssets().Generate();
-			AssetDatabase.Refresh();// (Const.Prefix, ImportAssetOptions.ImportRecursive);
-		}
+  public class Editor {
+    [MenuItem("Lifer/ResourceIdentifiers/Update")]
+    public static void Update() {
+      new Tag().Update();
+      new Layer().Update();
+      new Scene().Update();
+      new Resource().Update();
+      new StreamingAssets().Update();
+      AssetDatabase.Refresh();
+    }
 
-		[MenuItem("Lifer/ResourceIdentifiers/Clear Missing")]
-		public static void ClearMissing() {
-			new Scene().ClearMissing();
-			new Tag().ClearMissing();
-			new Layer().ClearMissing();
-			new Resource().ClearMissing();
-			new StreamingAssets().ClearMissing();
-			Generate();
-		}
-	}
+    [MenuItem("Lifer/ResourceIdentifiers/Reset")]
+    public static void Reset() {
+      new Tag().Clear();
+      new Layer().Clear();
+      new Scene().Clear();
+      new Resource().Clear();
+      new StreamingAssets().Clear();
+      Update();
+    }
+  }
 
-	public class AssetPostprocessor_ : AssetPostprocessor {
-		static void OnPostprocessAllAssets(string[] imported, string[] deleted,
-		string[] moved, string[] movedfrom) {
-			//Scan.Resources();
-		}
+  public class AssetPostprocessor_ : AssetPostprocessor {
+    static void OnPostprocessAllAssets(string[] imported, string[] deleted,
+    string[] moved, string[] movedfrom) {
+      //Scan.Resources();
+    }
 #if false
 		foreach (var str in imported) {
 			Debug.Log("Reimported Asset: " + str);
@@ -55,7 +55,7 @@ namespace Lifer.ResourceIdentifiers {
 			Debug.Log("Moved Asset: " + moved[i] + " from: " + movedfrom[i]);
 		}
 #endif
-	}
+  }
 }
 
 /*

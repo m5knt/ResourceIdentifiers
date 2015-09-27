@@ -21,8 +21,8 @@ namespace Lifer.ResourceIdentifiers {
 	public class Node<K, V>
 		where K : IEquatable<K> {
 		/**/
-		public K Key;
-		public V Value;
+		K Key;
+		V Value;
 		List<Node<K, V>> Child = new List<Node<K, V>>();
 
 		public bool ContainsKey(List<K> keys) {

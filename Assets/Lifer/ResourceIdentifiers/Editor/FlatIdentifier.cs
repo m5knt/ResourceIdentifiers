@@ -8,16 +8,13 @@
  *
  */
 
-using UnityEditor;
-using UnityEngine;
-using UnityEditorInternal;
-
 using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
+using System.Xml.Linq;
 
 /*
  *
@@ -25,57 +22,54 @@ using System.Linq;
 
 namespace Lifer.ResourceIdentifiers {
 
-	public abstract class FlatIdentifier : Identifier {
+  public abstract class FlatIdentifier : Identifier {
 
-		protected virtual string ToLabel(string name) {
-			return name.Replace(" ", "");
-		}
+    public override void Update() {
+      // xml 決定
+      var book = new Serialize(XML);
+      book.Load();
+      book.Update(Collect());
+      book.Save();
+      Generate(book);
+    }
 
-		public override void Generate() {
-			// xml 決定
-			var book = new Book(XML);
-			book.Load();
-			book.Update(All);
-			book.Save();
-			// 有効分
-			using (var o = new StreamWriter(CS, false, Encoding.UTF8)) {
-				o.Write(@"using System;
+    protected abstract void Generate(TextWriter o, XElement e);
+
+    protected override void Generate(Serialize book) {
+      var avail = book.Avail.Select(k => book.All[k]).
+                 OrderBy(e => int.Parse(e.Attribute("idx").Value)).ToList();
+      var missing = book.Missing.Select(k => book.All[k]).
+          OrderBy(e => int.Parse(e.Attribute("idx").Value)).ToList();
+
+      // 有効分
+      using (var o = new StreamWriter(CS, false, Encoding.UTF8)) {
+        o.Write(@"using System;
 using System.Diagnostics;
 
 namespace Lifer.Genarate {{
 public partial class {0} {{
 ", NameSpace);
-				book.Avails.ForEach(v => {
-					var k = v;
-					k = Const.ShortenRule.Replace(k, "");
-					k = Const.UnderRule.Replace(k, "_");
-					k = k.Replace('/', '_');
-					o.WriteLine(@"const string {0} = ""{1}"";", k, v);
-				});
-				o.Write(@"}
+        avail.ForEach(e => Generate(o, e));
+        o.Write(@"}
 }
 ");
-				/**/
-				o.Write(@"
+        /**/
+        o.Write(@"
 #if UNITY_EDITOR
 namespace Lifer.Genarate {{
 public partial class {0} {{
 ", NameSpace);
-				book.Missing.ForEach(v => {
-					var k = v;
-					k = Const.ShortenRule.Replace(k, "");
-					k = Const.UnderRule.Replace(k, "_");
-					k = k.Replace('/', '_');
-					o.WriteLine(@"[Obsolete(""[Lifer.ResourceIdentifiers] Missing"")]
-const string {0} = ""{1}"";", k, v);
-				});
-				o.Write(@"}
+        missing.ForEach(e => {
+          o.WriteLine(@"[Obsolete(""[Lifer.ResourceIdentifiers] Missing"")]");
+          Generate(o, e);
+        });
+        o.Write(@"}
 }
 #endif
 ");
-			}
-		}
-	}
+      }
+    }
+  }
 }
 
 /*
