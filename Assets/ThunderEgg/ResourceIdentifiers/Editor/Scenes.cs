@@ -19,7 +19,7 @@ using System.Xml.Linq;
  *
  */
 
-namespace Lifer.ResourceIdentifiers {
+namespace ThunderEgg.ResourceIdentifiers {
 
     public class Scene : FlatIdentifier {
 
@@ -29,7 +29,7 @@ namespace Lifer.ResourceIdentifiers {
             }
         }
 
-        protected override string NameSpace {
+        protected override string ClassName {
             get {
                 return "S";
             }
@@ -38,6 +38,7 @@ namespace Lifer.ResourceIdentifiers {
         protected override List<XElement> Collect() {
             var i = -1;
             var scenes = EditorBuildSettings.scenes.Where(n => n.enabled);
+            var temps = new Dictionary<string, XElement>();
             var elems = scenes.Select(scene => {
                 ++i;
                 var val = Path.GetFileNameWithoutExtension(scene.path);
@@ -47,6 +48,7 @@ namespace Lifer.ResourceIdentifiers {
                 e.SetAttributeValue("sym", sym);
                 e.SetAttributeValue("val", val);
                 e.Value = scene.path;
+                SetAttributeDup(temps, sym, e);
                 return e;
             }).ToList();
             return elems;
@@ -55,6 +57,10 @@ namespace Lifer.ResourceIdentifiers {
         protected override void Generater(TextWriter o, XElement e) {
             var sym = e.Attribute("sym").Value;
             var val = e.Attribute("val").Value;
+            var dup = (int)e.Attribute("dup");
+            if (dup != 0) {
+                o.WriteLine(@"[Obsolete(""Duplicate"")]");
+            }
             o.WriteLine(@"const string {0} = ""{1}"";", sym, val);
         }
     }

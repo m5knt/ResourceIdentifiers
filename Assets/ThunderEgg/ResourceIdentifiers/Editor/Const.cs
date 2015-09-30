@@ -15,7 +15,7 @@ using System.Text.RegularExpressions;
  *
  */
 
-namespace Lifer.ResourceIdentifiers {
+namespace ThunderEgg.ResourceIdentifiers {
 
     public static class Const {
 

@@ -22,7 +22,7 @@ using System.Xml.Linq;
  *
  */
 
-namespace Lifer.ResourceIdentifiers {
+namespace ThunderEgg.ResourceIdentifiers {
 
     public class Serializer {
         /**/

@@ -23,7 +23,7 @@ using System.Xml.Linq;
  *
  */
 
-namespace Lifer.ResourceIdentifiers {
+namespace ThunderEgg.ResourceIdentifiers {
 
     public class StreamingAssets : Identifier {
 
@@ -33,7 +33,7 @@ namespace Lifer.ResourceIdentifiers {
             }
         }
 
-        protected override string NameSpace {
+        protected override string ClassName {
             get {
                 return "SA";
             }
@@ -53,18 +53,20 @@ namespace Lifer.ResourceIdentifiers {
             var paths = AssetDatabase.GetAllAssetPaths().Where(n => {
                 return !Directory.Exists(n) && n.StartsWith(source);
             });
+            var temps = new Dictionary<string, XElement>();
             var i = -1;
             var elems = paths.Select(path => {
                 ++i;
                 var rel = path.Substring(source.Length);
                 var crumbs = rel.Split('/').ToList();
-                var syms = string.Join("/",
+                var sym = string.Join("/",
                   crumbs.Select(c => ToIdentifier(c)).ToArray());
                 var e = new XElement("resource");
                 e.SetAttributeValue("idx", i);
-                e.SetAttributeValue("sym", syms);
+                e.SetAttributeValue("sym", sym);
                 e.SetAttributeValue("val", rel);
                 e.Value = rel;
+                SetAttributeDup(temps, sym, e);
                 return e;
             }).ToList();
             return elems;
@@ -76,28 +78,32 @@ namespace Lifer.ResourceIdentifiers {
             book.AvailKeys.Select(k => book.Elements[k]).ToList().ForEach(e => {
                 var sym = e.Attribute("sym").Value;
                 var crumbs = sym.Split('/').ToList();
-                avail.Add(crumbs, book.Elements[sym]);
+                avail.Update(crumbs, book.Elements[sym]);
             });
             //
             var missing = new Node<string, XElement>();
             book.MissingKeys.Select(k => book.Elements[k]).ToList().ForEach(e => {
                 var sym = e.Attribute("sym").Value;
                 var crumbs = e.Attribute("sym").Value.Split('/').ToList();
-                missing.Add(crumbs, book.Elements[sym]);
+                missing.Update(crumbs, book.Elements[sym]);
             });
             using (var o = new StreamWriter(CS, false, Encoding.UTF8)) {
                 o.Write(@"using System;
 using System.Diagnostics;
 
-namespace Lifer.Generate {{
+namespace ThunderEgg.Generate {{
 public partial class {0} {{
-", NameSpace);
+", ClassName);
                 avail.Traverse(
                   (k, v) => {
                       o.WriteLine("public partial class {0} {{", k);
                   },
                   (k, v) => {
                       var val = v.Attribute("val").Value;
+                      var dup = (int)v.Attribute("dup");
+                      if (dup != 0) {
+                          o.WriteLine(@"[Obsolete(""Duplicate"")]");
+                      }
                       o.WriteLine("public const string {0} = \"{1}\";", k, val);
                   },
                   (k, v) => {
@@ -109,9 +115,9 @@ public partial class {0} {{
                 // 辟｡蜉ｹ蛻�
                 o.Write(@"
 #if UNITY_EDITOR
-namespace Lifer.Generate {{
+namespace ThunderEgg.Generate {{
 public partial class {0} {{
-", NameSpace);
+", ClassName);
                 missing.Traverse(
                   (k, v) => {
                       o.WriteLine("public partial class {0} {{", k);
@@ -119,7 +125,7 @@ public partial class {0} {{
                   (k, v) => {
                       var val = v.Attribute("val").Value;
                       o.Write(
-  @"[Obsolete(""[Lifer.ResourceIdentifiers] Missing"")]
+  @"[Obsolete(""Missing"")]
 public const string {0} = ""{1}"";
 ", k, val);
                   },

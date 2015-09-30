@@ -20,7 +20,7 @@ using System.Xml.Linq;
  *
  */
 
-namespace Lifer.ResourceIdentifiers {
+namespace ThunderEgg.ResourceIdentifiers {
 
     public abstract class FlatIdentifier : Identifier {
 
@@ -46,9 +46,9 @@ namespace Lifer.ResourceIdentifiers {
                 o.Write(@"using System;
 using System.Diagnostics;
 
-namespace Lifer.Genarate {{
+namespace ThunderEgg.Genarate {{
 public partial class {0} {{
-", NameSpace);
+", ClassName);
                 avail.ForEach(e => Generater(o, e));
                 o.Write(@"}
 }
@@ -56,11 +56,11 @@ public partial class {0} {{
                 /**/
                 o.Write(@"
 #if UNITY_EDITOR
-namespace Lifer.Genarate {{
+namespace ThunderEgg.Genarate {{
 public partial class {0} {{
-", NameSpace);
+", ClassName);
                 missing.ForEach(e => {
-                    o.WriteLine(@"[Obsolete(""[Lifer.ResourceIdentifiers] Missing"")]");
+                    o.WriteLine(@"[Obsolete(""Missing"")]");
                     Generater(o, e);
                 });
                 o.Write(@"}

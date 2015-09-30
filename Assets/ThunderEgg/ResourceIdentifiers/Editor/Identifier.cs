@@ -24,7 +24,7 @@ using System.Linq;
  *
  */
 
-namespace Lifer.ResourceIdentifiers {
+namespace ThunderEgg.ResourceIdentifiers {
 
     public abstract class Identifier {
 
@@ -32,7 +32,7 @@ namespace Lifer.ResourceIdentifiers {
             get;
         }
 
-        protected abstract string NameSpace {
+        protected abstract string ClassName {
             get;
         }
 
@@ -65,6 +65,20 @@ namespace Lifer.ResourceIdentifiers {
             }
             if (File.Exists(XML)) {
                 File.Delete(XML);
+            }
+        }
+
+        protected void SetAttributeDup(Dictionary<string, XElement> temps,
+            string sym, XElement e) //
+        {
+            XElement hit;
+            if (!temps.TryGetValue(sym, out hit)) {
+                temps.Add(sym, e);
+                e.SetAttributeValue("dup", "0");
+            }
+            else {
+                hit.SetAttributeValue("dup", "1");
+                e.SetAttributeValue("dup", "1");
             }
         }
 

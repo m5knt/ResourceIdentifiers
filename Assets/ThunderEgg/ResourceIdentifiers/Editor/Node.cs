@@ -16,7 +16,7 @@ using System.Linq;
  *
  */
 
-namespace Lifer.ResourceIdentifiers {
+namespace ThunderEgg.ResourceIdentifiers {
 
     public class Node<K, V>
       where K : IEquatable<K> {
@@ -37,7 +37,7 @@ namespace Lifer.ResourceIdentifiers {
             return true;
         }
 
-        public void Add(List<K> keys, V value) {
+        public void Update(List<K> keys, V value) {
             var cur = this;
             foreach (var key in keys) {
                 var next = cur.Child.FirstOrDefault(t => t.Key.Equals(key));
@@ -46,9 +46,6 @@ namespace Lifer.ResourceIdentifiers {
                     cur.Child.Add(next);
                 }
                 cur = next;
-            }
-            if (cur.Value != null) {
-                throw new ArgumentException();
             }
             cur.Value = value;
         }
